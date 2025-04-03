@@ -19,11 +19,11 @@ function askQuestion(query) {
 // Getting book
 async function getBook(str) {
     const request = await fetch(url + str);
-    const json = await request.json(); // Consume promise using await
-    console.log(`Found ${json.count} books.`); // How many books we got back
+    const json = await request.json(); // Consume promise using await so we don't get pending message
+    console.log(`Found ${json.count} books.`); // printing how many books we got back
 
-    if (json.count > 0) {
-        // List the titles and authors
+    if (json.count > 0) { //If we got any books
+
         const bookTitles = json.results.map((book, index) => {
             console.log(`${index + 1}. Title: ${book.title}, Author: ${book.authors.map(a => a.name).join(', ')}`);
             return book;
@@ -42,30 +42,39 @@ async function getBook(str) {
             const newJson = await newRequest.text();
             //console.log(newJson);
             //Creating an array called pages and saving by character, we can easily make this a dictionary
-            const pages = [];
+            //const pages = [];
+            //for (let i = 0; i < newJson.length; i += 2000) {
+                //pages.push(newJson.substring(i, i + 2000));
+            //}
+
+            const pages = new Map();
+
             for (let i = 0; i < newJson.length; i += 2000) {
-                pages.push(newJson.substring(i, i + 2000));
+                const pageNumber = Math.floor(i / 2000) + 1; // Page number starts at 1
+                const pageContent = newJson.substring(i, i + 2000);
+                pages.set(pageNumber, pageContent);
             }
+           // console.log(pages);
 
 
             //console.log(pages);
-            let currentPage = 0;
+            let currentPage = 1;
             console.log(`\n---\nBook Preview (Page 1):\n`);
-            console.log(pages[currentPage]); // Show the first page
+            console.log(pages.get(currentPage)); // Show the first page
 
             // go through pages starting at 0
             let navigating = true;
             while (navigating) {
                 const action = await askQuestion("\nType 'next' for next page, 'prev' for previous page, or 'quit' to exit: ");
 
-                if (action.toLowerCase() === 'next' && currentPage < pages.length - 1) {
+                if (action.toLowerCase() === 'next' && currentPage < pages.size - 1) {
                     currentPage++;
-                    console.log(`\n---\nBook Preview (Page ${currentPage + 1}):\n`);
-                    console.log(pages[currentPage]);
+                    console.log(`\n---\nBook Preview (Page ${currentPage}):\n`);
+                    console.log(pages.get(currentPage));
                 } else if (action.toLowerCase() === 'prev' && currentPage > 0) {
                     currentPage--;
-                    console.log(`\n---\nBook Preview (Page ${currentPage + 1}):\n`);
-                    console.log(pages[currentPage]);
+                    console.log(`\n---\nBook Preview (Page ${currentPage}):\n`);
+                    console.log(pages.get(currentPage));
                 } else if (action.toLowerCase() === 'quit') {
                     navigating = false;
                     console.log('Exiting.');
@@ -99,3 +108,12 @@ async function bookSearch() {
 }
 
 bookSearch(); //Call that
+
+//Read is driver
+
+//booksearch
+//getbook
+//paging
+//menu
+//Create the map/dictionary globally, create map when we start, then call first method. Fuck em. Ask tomorrow. Get fucked
+//Try catch when getting
