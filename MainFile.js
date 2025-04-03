@@ -117,3 +117,4 @@ bookSearch(); //Call that
 //menu
 //Create the map/dictionary globally, create map when we start, then call first method. Fuck em. Ask tomorrow. Get fucked
 //Try catch when getting
+//TEST
