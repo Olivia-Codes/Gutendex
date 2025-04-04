@@ -11,8 +11,8 @@ const rl = readline.createInterface({
 const url = 'https://gutendex.com/books?search='; // A URL to search for books, like Google, but for free ebooks
 
 // Where we're keeping the books we recently looked at, don’t want to forget them
-const booksFilePath = '/Users/oliviafoster/Gutendex/Last10Books/booksQueue.json'; // A sweet spot in our file system to stash book data
-
+const booksFilePath = '/Users/olivafoster/Gutendex/Last10Books/booksQueue.json'; // A sweet spot in our file system to stash book data
+//const booksFilePath = '/Users/nstra/WebstormProjects/Gutendex/Last10Books/booksQueue.json';
 let booksQueue = []; // Our personal stash of books, currently empty (but not for long)
 
 // Let's see if we've saved some books before. If we have, let's load them in. If not... well, we just chill
@@ -200,14 +200,14 @@ async function readBookFromQueue() {
 
 // Main menu, like the dashboard for your reading life
 async function mainMenu() {
-    console.log("\nWelcome to the book search and queue system!");
+    console.log("\n - Main Menu - ");
     console.log("1. Search for a new book");
     console.log("2. View books in the queue");
     console.log("3. Exit");
     console.log("4. Read a book from the queue");
     console.log("5. Clear the book queue\n"); // Added option to clear the queue
 
-    const choice = await askQuestion("\nPlease select an option (1-5): ");
+    const choice = await askQuestion("Please select an option (1-5): ");
 
     switch (choice) {
         case '1':
@@ -237,16 +237,11 @@ async function mainMenu() {
 
 // Start the fun
 async function bookSearch() {
-    const searchBy = await askQuestion("Would you like to search by 'title' or 'author'? ");
+    console.log("\nSearching for a book by title or author");
 
-    if (searchBy.toLowerCase() !== 'title' && searchBy.toLowerCase() !== 'author') {
-        console.log("Invalid input, please choose either 'title' or 'author'.");
-        return bookSearch(); // Retry if the input is whack
-    }
+    const searchTerm = await askQuestion(`Please enter the term you want to search for: `);
 
-    const searchTerm = await askQuestion(`Please enter the ${searchBy} you want to search for: `);
-
-    console.log(`Searching for books by ${searchBy}...`);
+    console.log(`Searching for books matching ${searchTerm}...`);
     await getBook(searchTerm); // Go get those books, fam
 
     // After the search, return to the main menu
