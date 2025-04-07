@@ -150,7 +150,7 @@ async function getBook(str) {
     }
 }
 
-// Function to read a book from the queue. It’s like your personal reading club
+
 async function readDownloads() {
     if (last10.length === 0) {
         console.log("No downloaded books to read.");
