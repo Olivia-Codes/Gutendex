@@ -1,27 +1,27 @@
-const readline = require('readline'); // Yo, this lets us talk to the user in the terminal
-const fs = require('fs'); // File System, so we can save and load stuff, 'cause saving is important, bro
-const path = require('path'); // Helps us work with file paths, ‘cause we don't want things to break, right?
-//const fetch = require('node-fetch'); // In case we wanna get stuff from the internet (but we’re keeping it chill for now)
+const readline = require('readline'); // readline gives an interface to get input from a stream
+const fs = require('fs'); // importing file system so we can save last 10 locally
+const path = require('path'); //importing path so I can join later
+
 
 const rl = readline.createInterface({
-    input: process.stdin,  // Getting the user's input, like their brainwaves
-    output: process.stdout // And sending out our amazing responses
+    input: process.stdin,  //having interface use standard input stream for user input
+    output: process.stdout // sending output to console 
 });
 
-const url = 'https://gutendex.com/books?search='; // A URL to search for books, like Google, but for free ebooks
+const url = 'https://gutendex.com/books?search='; 
 
-// Where we're keeping the books we recently looked at, don’t want to forget them
-const booksFilePath = '/Users/olivafoster/Gutendex/Last10Books/booksQueue.json'; // A sweet spot in our file system to stash book data
-//const booksFilePath = '/Users/nstra/WebstormProjects/Gutendex/Last10Books/booksQueue.json';
-let booksQueue = []; // Our personal stash of books, currently empty (but not for long)
 
-// Let's see if we've saved some books before. If we have, let's load them in. If not... well, we just chill
-if (fs.existsSync(booksFilePath)) {
-    const fileContent = fs.readFileSync(booksFilePath);  // Read in the file content, 'cause we wanna know what's up
-    booksQueue = JSON.parse(fileContent);  // Turn that JSON into actual data we can use, pretty cool right?
+const locallySaved = '/Users/olivafoster/Gutendex/Last10Books/booksQueue.json'; // Olivia's Local Dir Path
+//const locallySaved = '/Users/nstra/WebstormProjects/Gutendex/Last10Books/booksQueue.json'; //Noah's Local Dir Path
+let last10 = []; 
+
+
+if (fs.existsSync(locallySaved)) { //Stops code until check is complete to check if this path exists
+    const file = fs.readFileSync(locallySaved);  //Stops code until file is read, saves
+    last10 = JSON.parse(file);  // Turning json format into javascript object
 }
 
-// Ask the user a question and wait for their answer, like a chill interview
+// From class
 function askQuestion(query) {
     return new Promise(resolve => {
         rl.question(query, answer => {
@@ -31,222 +31,240 @@ function askQuestion(query) {
 }
 
 // Save the booksQueue to the file, so we don’t lose all our precious books
-function saveQueueToFile() {
-    if (!fs.existsSync(path.join(__dirname, 'Last10Books'))) {
-        fs.mkdirSync(path.join(__dirname, 'Last10Books'));  // Create the folder if it doesn’t exist, ‘cause we gotta stay organized
+function downloadBook() {
+    if (!fs.existsSync(path.join(__dirname, 'Last10Books'))) { // if path don't exist
+        fs.mkdirSync(path.join(__dirname, 'Last10Books'));  // Make it
     }
 
-    // Turn booksQueue into a format we can save, ‘cause the file doesn't speak JavaScript
-    const queueToSave = booksQueue.map(book => ({
+    // Creating a dictionary that is book title and pages to download + retrievbe locally
+    const bookToDownload = last10.map(book => ({ 
         title: book.title,
-        pages: book.pages  // Keeping it simple, just titles and pages here
+        pages: book.pages  
     }));
 
-    // Save it to the file, so we don’t lose it all. Saving is key, my friend
-    fs.writeFileSync(booksFilePath, JSON.stringify(queueToSave, null, 2), 'utf-8');
+    
+    fs.writeFileSync(locallySaved, JSON.stringify(bookToDownload, null, 2), 'utf-8'); //Writing to local, 
+    //path, stringfy is turning javascript object into json string, javascript obj, null because we don't need filter
+    //Json will indent with 2 spaces for better reading, utf-8 encoding for our txt
 }
 
-// Clear the book queue... sometimes you gotta start fresh, like a new playlist
+///Mostly for testing
 function clearQueue() {
-    booksQueue = []; // Empty out that queue, like deleting a song you’re tired of
-    saveQueueToFile(); // Make sure we also save this empty queue, so it's like it never existed
-    console.log('The book queue has been cleared.');
+    last10 = []; // Empty it
+    downloadBook(); // save empty
+    console.log('Book shelf is now empty.'); //saying we did it
 }
 
-// Check if the book is in the queue and move it to the front if found, so it's easier to find later
-function updateQueueWithBook(title, pages) {
-    const bookIndex = booksQueue.findIndex(b => b.title === title);  // Let's see if the book is already in there
+
+function updateBookShelf(title, pages) {
+
+    //Geeksforgeeks and ChatGPT helped me understand/write arrow function here -Olivia 
+    const bookIndex = last10.findIndex(book => book.title === title);  // finding index of passed book using it's title
+    //Also this is an arrow function. so bookIndex is function name, it calls function findIndex on 
+    //last10 and book is the parameter, book.title === title is the condition that has to be true. It's a callback function 
+    //Checking if passed book title matches any existing book titles in last10
 
     if (bookIndex !== -1) {
-        // If we found the book, move it to the front of the line
-        booksQueue.unshift(booksQueue.splice(bookIndex, 1)[0]);
+        // if it's -1, we never found it. So if we get here, we found it!
+        last10.unshift(last10.splice(bookIndex, 1)[0]);
+        //splice(index we wanna move, number of element we're removing) - This will then 
+        //return this removed thing as array. unshift adds stuff to the front of an array. 
+        //the [0] grabs the first and only thing returned from splice(bookIndex,1) and unshift then 
+        //takes this book and places it at the front. 
     } else {
-        // Otherwise, just add it to the front of the queue
-        booksQueue.unshift({ title, pages });
+        // Means we didn't find it. so we just place it at the front. 
+        last10.unshift({ title, pages });
 
-        // If the queue gets too big, we toss the last book off like it's a hot potato
-        if (booksQueue.length > 10) {
-            booksQueue.pop();  // Last book? Sorry, you gotta go.
+       
+        if (last10.length > 10) {
+            last10.pop();  //Only saving 10 books 
         }
     }
 
-    // Save the updated queue, 'cause we don’t want to forget anything
-    saveQueueToFile();
+    //Now that we have made our updates we re-write
+    downloadBook();
 }
 
-// Print out the books in the queue, ‘cause who doesn’t wanna flex a little
-function printBooksQueue() {
-    if (booksQueue.length === 0) {
-        console.log("No books in the queue."); // Oh no, the queue’s empty. Sad face.
+
+function printDownloadedBooks() {
+    if (last10.length === 0) { //We have no books rn
+        console.log("Book shelf empty :,("); 
         return;
     }
 
-    console.log("\nBooks in the queue:");
-    booksQueue.forEach((book, index) => {
-        console.log(`${index + 1}. Title: ${book.title}`); // Listing out our book titles, like a cool library
+    console.log("\nDownloaded Books:");
+    last10.forEach((book, index) => { //Loop through map, kinda like .items()
+        console.log(`${index + 1}. Title: ${book.title}`); // Listing out downloaded books for selection
+        //adding 1 to index bc we start at 0
     });
 }
 
-// Function to get a book from Gutendex, because we love free books, right?
-async function getBook(str) {
-    const request = await fetch(url + str); // Get the book data from the internet, gotta fetch the goods
-    const json = await request.json(); // Turn the response into something we can actually use, like turning cereal into milk
-    console.log(`Found ${json.count} books.`); // Look how many books we found, it's a vibe
 
-    if (json.count > 0) { // If we actually found books
-        const bookTitles = json.results.map((book, index) => {
-            console.log(`${index + 1}. Title: ${book.title}, Author: ${book.authors.map(a => a.name).join(', ')}`);
+async function getBook(str) {
+    const request = await fetch(url + str); // Get the book data from gutendex
+    const json = await request.json(); 
+    console.log(`We have ${json.count} options.`); 
+
+    if (json.count > 0) { // If any books located
+        const bookTitles = json.results.map((book, index) => { //Map is iterating over every book
+            //and saving the books + indeces. 
+            console.log(`${index + 1}. Title: ${book.title}, Author: ${book.authors.map(author => author.name).join(', ')}`);
+            //map for authors is iterating over authors names and joining them with ,
             return book;
         });
 
-        // Ask the user which book they wanna read, like picking a snack at the store
-        const choice = await askQuestion(`Please enter the number of the book you'd like to select (1-${json.count}): `);
-        const selectedBook = json.results[parseInt(choice) - 1]; // Get the book they picked
+        
+        const choice = await askQuestion(`Enter the number of the book you'd like to read (1-${json.count}): `);
+        const selectedBook = json.results[parseInt(choice) - 1]; // casts user string into int and subtracts 1, cause we start at 0 
 
-        if (selectedBook) {
-            console.log(`\nYou selected: ${selectedBook.title} by ${selectedBook.authors.map(a => a.name).join(', ')}`);
+        if (selectedBook) { //Truthy is not zero, not empty string, and object or a function. Else false
+            console.log(`\nYou want to read: ${selectedBook.title} by ${selectedBook.authors.map(author => author.name).join(', ')}`);
 
-            // Fetch the book content, like finding a hidden treasure
-            const bookId = selectedBook.id;
-            let newJson = '';
-            try {
+           
+            const bookId = selectedBook.id;//grab id
+            let newJson = ''; //actually gonna be text 
+            try {//in case we get a 404
                 const newRequest = await fetch(`https://www.gutenberg.org/ebooks/${bookId}.txt.utf-8`);
 
                 if (!newRequest.ok) {
-                    // If the fetch failed, let the user know and ask if they wanna retry
-                    throw new Error(`Failed to fetch the book. Status Code: ${newRequest.status} ${newRequest.statusText}`);
+                    // If the fetch failed, throw what message we got
+                    throw new Error(`Failed to read the selected book. Status Code: ${newRequest.status} ${newRequest.statusText}`);
                 }
 
-                // If it's all good, get the text of the book
+                //Try getting text
                 newJson = await newRequest.text();
 
-                // Now that we have the book, let's break it up into pages, ‘cause who wants to read a 1000-page block?
+                
                 const pages = [];
                 for (let i = 0; i < newJson.length; i += 2000) {
-                    const pageContent = newJson.substring(i, i + 2000);
-                    pages.push(pageContent);  // Put each page in the array
+                    const page = newJson.substring(i, i + 2000); //saving every 2000 characters 
+                    pages.push(page);  
                 }
 
-                // Add the book to our queue, like adding it to the VIP section
-                updateQueueWithBook(selectedBook.title, pages);
-                console.log(`Book successfully downloaded and added to the queue: ${selectedBook.title}`);
+                // adding book to shelf (download directory)
+                updateBookShelf(selectedBook.title, pages);
+                console.log(`Book downloaded: ${selectedBook.title}`);
 
             } catch (err) {
-                // If something goes wrong, let the user know
+                // If failed, print error
                 console.log(`Error Message: ${err.message}`);
-                const retry = await askQuestion('Would you like to try again? (yes/no): ');
-                if (retry.toLowerCase() === 'yes') {
-                    await bookSearch(); // Retry the search if they’re down
+                const retry = await askQuestion('Would you like to read another book? (y/n): ');
+                if (retry.toLowerCase() === 'y') {
+                    await bookSearch(); //await consumes promise, makes async wait for promise to settle 
+                    
                 } else {
-                    console.log('Exiting.');
-                    return; // Exit if they don't wanna retry
+                    console.log('Goodbye:')');
+                    return; 
                 }
             }
         } else {
-            console.log('Invalid choice. Please try again.');
+            console.log('Invalid option. Please choose again.');
         }
     } else {
-        console.log('No books found. Guess we gotta keep searching.');
+        console.log('No books match the description, try again?');
     }
 }
 
 // Function to read a book from the queue. It’s like your personal reading club
-async function readBookFromQueue() {
-    if (booksQueue.length === 0) {
-        console.log("No books in the queue to read."); // Uh oh, no books here. Time to add some!
+async function readDownloads() {
+    if (last10.length === 0) {
+        console.log("No downloaded books to read."); 
         return;
     }
 
-    booksQueue.forEach((book, index) => {
-        console.log(`${index + 1}. Title: ${book.title}`); // Print out the books we got, you know, for inspo
+    last10.forEach((book, index) => {
+        console.log(`${index + 1}. Title: ${book.title}`); 
     });
 
-    const bookChoice = await askQuestion("Please enter the number of the book you'd like to read: ");
-    const selectedBook = booksQueue[parseInt(bookChoice) - 1];
+    const bookChoice = await askQuestion("Enter the number of the downloaded book you want to read: ");
+    const selectedBook = last10[parseInt(bookChoice) - 1]; //cast to int, sub 1
 
     if (!selectedBook) {
-        console.log("Invalid choice. Please try again.");
-        return readBookFromQueue(); // Retry if invalid input
+        console.log("That's not an option, try again?");
+        return readDownloads(); 
     }
 
-    console.log(`\nYou selected: ${selectedBook.title}`);
+    console.log(`\nSelected: ${selectedBook.title}`);
 
-    const pages = selectedBook.pages;  // Now it’s an array, no more Map nonsense
-    let currentPage = 0; // Start from the first page
-    console.log(`\n---\nBook Preview (Page 1):\n`);
-    console.log(pages[currentPage]); // Show the first page
+    const pages = selectedBook.pages; 
+    let currentPage = 0; 
+    console.log(`\nPAGE 1\n`);
+    console.log(pages[currentPage]); 
 
-    let navigating = true;
-    while (navigating) {
-        const action = await askQuestion("\nType 'next' for next page, 'prev' for previous page, or 'quit' to exit: ");
+    let reading = true;
+    while (reading) {
 
+        //Paging indexing supported by chatgpt, specifcally the idea to give user a next, prev, and exit then indexing based on that
+        //continuous input. 
+        const action = await askQuestion("\nType 'next' for next page, 'prev' for previous page, or 'exit' to exit: ");
+        
         if (action.toLowerCase() === 'next' && currentPage < pages.length - 1) {
             currentPage++;
-            console.log(`\n---\nBook Preview (Page ${currentPage + 1}):\n`);
+            console.log(`\nPAGE ${currentPage + 1}\n`);
             console.log(pages[currentPage]);
         } else if (action.toLowerCase() === 'prev' && currentPage > 0) {
             currentPage--;
-            console.log(`\n---\nBook Preview (Page ${currentPage + 1}):\n`);
+            console.log(`\nPAGE ${currentPage + 1}\n`);
             console.log(pages[currentPage]);
-        } else if (action.toLowerCase() === 'quit') {
-            navigating = false;
-            console.log('Exiting book preview.');
-            return; // Stop navigating
+        } else if (action.toLowerCase() === 'exit') {
+            reading = false;
+            console.log('Closing reader...');
+            return; // Stop reading
         } else {
-            console.log("Invalid input. Please type 'next', 'prev', or 'quit'.");
+            console.log("Not a paging option. Please type 'next', 'prev', or 'exit'.");
         }
     }
 }
 
-// Main menu, like the dashboard for your reading life
-async function mainMenu() {
-    console.log("\n - Main Menu - ");
-    console.log("1. Search for a new book");
-    console.log("2. View books in the queue");
-    console.log("3. Exit");
-    console.log("4. Read a book from the queue");
-    console.log("5. Clear the book queue\n"); // Added option to clear the queue
 
-    const choice = await askQuestion("Please select an option (1-5): ");
+async function menu() {
+    console.log("\nBook Menu");
+    console.log("1. Search for a book");
+    console.log("2. See Downloaded books");
+    console.log("3. Leave");
+    console.log("4. Read from downloads");
+    console.log("5. Clear shelf\n"); 
+
+    const choice = await askQuestion("Select desired menu option (1-5): ");
 
     switch (choice) {
         case '1':
-            await bookSearch(); // Book search, duh
+            await bookSearch(); 
             break;
         case '2':
-            printBooksQueue(); // Show your book list
+            printDownloadedBooks(); 
             break;
         case '3':
-            console.log("Exiting.");
-            rl.close(); // Close the chat interface, peace out
-            return; // Stop the program
+            console.log("Goodbye:'(");
+            rl.close(); 
+            return; 
         case '4':
-            await readBookFromQueue(); // Read a book from the queue, nice
+            await readDownloads(); 
             break;
         case '5':
-            clearQueue(); // Clear the queue like wiping your phone screen
+            clearQueue(); 
             break;
         default:
-            console.log("Invalid option. Please try again.");
+            console.log("Not an  option, try again?");
     }
 
-    if (!rl._destroyed) {  // Make sure we’re still alive before showing the menu again
-        await mainMenu();
+    if (!rl._destroyed) {  // if interface still active 
+        await menu();
     }
 }
 
-// Start the fun
+
 async function bookSearch() {
     console.log("\nSearching for a book by title or author");
 
     const searchTerm = await askQuestion(`Please enter the term you want to search for: `);
 
     console.log(`Searching for books matching ${searchTerm}...`);
-    await getBook(searchTerm); // Go get those books, fam
+    await getBook(searchTerm); 
 
-    // After the search, return to the main menu
-    await mainMenu();
+  
+    await menu();
 }
 
-// Kick things off with the main menu
-mainMenu();
+
+menu();
