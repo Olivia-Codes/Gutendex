@@ -1,6 +1,8 @@
+//Written by Noah Strasler and Olivia Foster
+
 const readline = require('readline'); // readline gives an interface to get input from a stream
 const fs = require('fs'); // importing file system so we can save last 10 locally
-const path = require('path'); // importing path so I can join later
+const path = require('path'); // importing path to join later
 
 const rl = readline.createInterface({
     input: process.stdin,  // having interface use standard input stream for user input
@@ -27,7 +29,7 @@ function askQuestion(query) {
     });
 }
 
-// Save the booksQueue to the file, so we don’t lose all our precious books
+
 function downloadBook() {
     if (!fs.existsSync(path.join(__dirname, 'Last10Books'))) { // if path doesn't exist
         fs.mkdirSync(path.join(__dirname, 'Last10Books'));  // Make it
@@ -50,7 +52,7 @@ function clearQueue() {
 }
 
 function updateBookShelf(title, pages) {
-    //Geeksforgeeks and ChatGPT helped me understand/write arrow function here -Olivia
+    //Geeksforgeeks helped me understand/write arrow function here -Olivia
     const bookIndex = last10.findIndex(book => book.title === title);  // finding index of passed book using its title
     //Also this is an arrow function. so bookIndex is function name, it calls function findIndex on
     //last10 and book is the parameter, book.title === title is the condition that has to be true. It's a callback function
@@ -178,7 +180,7 @@ async function readDownloads() {
 
     let reading = true;
     while (reading) {
-        // Paging indexing supported by chatgpt, specifically the idea to give user a next, prev, and exit then indexing based on that
+        // Paging indexing idea solution supported by chatgpt, specifically the idea to give user a next, prev, and exit then indexing based on that
         // continuous input.
         const action = await askQuestion("\nType 'next' for next page, 'prev' for previous page, or 'exit' to exit: ");
 
@@ -233,8 +235,6 @@ async function menu() {
 
     if (!rl._destroyed) {  // Check if interface is still active
         await menu();
-    } else {
-        console.log('Readline interface destroyed. Exiting menu.');
     }
 }
 
